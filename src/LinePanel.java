@@ -1,10 +1,9 @@
-import java.awt.BasicStroke;
+
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.awt.geom.Line2D;
 import java.util.ArrayList;
 
 import javax.swing.JPanel;

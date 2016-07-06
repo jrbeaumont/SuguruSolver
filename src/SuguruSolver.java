@@ -1,12 +1,15 @@
 import java.awt.BorderLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
-
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
@@ -20,7 +23,6 @@ public class SuguruSolver {
     private static ArrayList<ArrayList<GridLine>> verticalLines;
     private static ArrayList<ArrayList<GridLine>> horizontalLines;
     private static LinePanel gridPanel;
-    private static int componentNo = 0;
 
     public static void main(String[] args) {
         mainWindow = new JFrame();
@@ -39,7 +41,10 @@ public class SuguruSolver {
 
         JPanel buttonPanel = new JPanel();
         JButton goBtn = new JButton("Go");
+        JButton clearBtn = new JButton("Clear");
         buttonPanel.add(goBtn);
+        buttonPanel.add(clearBtn);
+        addActionListeners(goBtn, clearBtn);
 
         mainWindow.add(buttonPanel, BorderLayout.SOUTH);
 
@@ -47,8 +52,46 @@ public class SuguruSolver {
         mainWindow.setVisible(true);
         mainWindow.setResizable(false);
         generateBorders();
+
     }
     
+    private static void addActionListeners(JButton go, JButton clear) {
+
+        go.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                sanityCheck();
+                solve();
+            }
+            
+        });
+
+        clear.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                for (int i = 0; i < gridList.size(); i++) {
+                    for (JTextField t : gridList.get(i)) {
+                        t.setText("");
+                    }
+                }
+                for (int i = 0; i < horizontalLines.size(); i++) {
+                    for (GridLine l : horizontalLines.get(i)) {
+                        if (l.getCanChange()) l.setIsBorder(false);
+                    }
+                }
+                for (int i = 0; i < verticalLines.size(); i++) {
+                    for (GridLine l : verticalLines.get(i)) {
+                        if (l.getCanChange()) l.setIsBorder(false);
+                    }
+                }
+                mainWindow.repaint();
+            }
+
+        });
+    }
+
     private static void generateGrid() {
         GridLayout grid = new GridLayout();
         grid.setColumns(columns);
@@ -88,7 +131,7 @@ public class SuguruSolver {
             if (i == 0) {
                 bottomBorder = true;
             } else {
-                index = i - 1;
+                index--;
             }
             for (JTextField t : gridList.get(index)) {
                 GridLine line;
@@ -109,37 +152,35 @@ public class SuguruSolver {
             }
             horizontalLines.add(h);
         }
-
+        
         for (int i = 0; i < (rows + 1); i++) {
             ArrayList<GridLine> v = new ArrayList<GridLine>();
             int index = i;
             boolean rightBorder = false;
             if (i == rows) {
                 rightBorder = true;
-                index = rows - 1;
+            }
+            if (i > 0){
+                index--;
             }
             for (JTextField t : getVerticalList(index)) {
                 GridLine line;
                 int x = (int) t.getLocation().getX();
-                if (index == 0) {
-                    x -= 1;
-                } else
-                {
-                    x -= 5;
-                }
                 int y = (int) t.getLocation().getY();
-                int h = t.getHeight();
-                System.out.println(h);
-                if (rightBorder) {
+                int h = t.getHeight() + 4;
+                if (i != 0) {
                     x += t.getWidth();
                 }
-                if (i == columns || rightBorder) {
+                if (rightBorder) {
+                    x -= 2;
+                }
+                if (i == 0 || rightBorder) {
                     line = new GridLine(x, y, h, true, false, false);
                 } else {
                     line = new GridLine(x, y, h, false, true, false);
                 }
-                gridPanel.add(line);
                 v.add(line);
+                gridPanel.add(line);
             }
             verticalLines.add(v);
         }
@@ -152,6 +193,89 @@ public class SuguruSolver {
             fields[i] = gridList.get(i).get(index);
         }
         return fields;
+    }
+
+    public static boolean sanityCheck() {
+        for (int i = 0; i < gridList.size(); i++) {
+            for (JTextField t : gridList.get(i)) {
+                String s = t.getText();
+
+                if (s.length() > 1) {
+                    JOptionPane.showMessageDialog(mainWindow, "One box contains too many characters", "ERROR", JOptionPane.ERROR_MESSAGE);
+                    return false;
+                } else if (!s.isEmpty() && (s.charAt(0) > '9' || s.charAt(0) < '0')) {
+                    JOptionPane.showMessageDialog(mainWindow, "One box contains a non numeric character", "ERROR", JOptionPane.ERROR_MESSAGE);
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    
+    public static void solve() {
+        ArrayList<ArrayList<JTextField>> groups = findGroups();
+    }
+    
+    public static ArrayList<ArrayList<JTextField>> findGroups() {
+        ArrayList<ArrayList<JTextField>> groups = new ArrayList<>();
+
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < columns; j++) {
+                if (!contains(groups, i, j)) {
+                    Border b = findBorders(i, j);
+                    ArrayList<JTextField> g = findGroupMembers(b);
+                }
+            }
+        }
+
+        return groups;
+    }
+
+    private static ArrayList<JTextField> findGroupMembers(Border b) {
+        ArrayList<JTextField> result = new ArrayList<JTextField>();
+        result.add(gridList.get(b.getX()).get(b.getY()));
+        
+        if (!b.getLeft()) {
+            result.addAll(findGroupMembers(findBorders(b.getX() - 1, b.getY())));
+        }
+
+        if (!b.getTop()) {
+            result.addAll(findGroupMembers(findBorders(b.getX(), b.getY() + 1)));
+        }
+
+        if (!b.getRight()) {
+            result.addAll(findGroupMembers(findBorders(b.getX() + 1, b.getY())));
+        }
+
+        if (!b.getBottom()) {
+            result.addAll(findGroupMembers(findBorders(b.getX(), b.getY() - 1)));
+        }
+
+        return result; 
+    }
+
+    private static boolean contains(ArrayList<ArrayList<JTextField>> groups, int i, int j) {
+        JTextField c = gridList.get(i).get(j);
+        for (ArrayList<JTextField> l : groups) {
+            if (l.contains(c)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static Border findBorders(int x, int y) {
+        Border b = new Border(x, y);
+
+        b.setBottom(horizontalLines.get(x).get(x).getIsBorder());
+
+        b.setTop(horizontalLines.get(x+1).get(x).getIsBorder());
+
+        b.setLeft(verticalLines.get(y).get(y).getIsBorder());
+
+        b.setRight(verticalLines.get(y+1).get(y).getIsBorder());
+        
+        return b;
     }
 
 }

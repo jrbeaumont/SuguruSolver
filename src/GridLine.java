@@ -37,9 +37,9 @@ public class GridLine extends Rectangle2D.Double{
             }
         } else {
             if (isVert) {
-                height = 5;
+                height = 3;
             } else {
-                width = 5;
+                width = 3;
             }
         }
     }
