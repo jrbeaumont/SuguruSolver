@@ -93,11 +93,11 @@ public class SuguruSolver {
             for (JTextField t : gridList.get(index)) {
                 GridLine line;
                 
-                int x = (int) t.getLocation().getX() - 4;
-                int y = (int) t.getLocation().getY() - 4;
+                int x = (int) t.getLocation().getX() - 5;
+                int y = (int) t.getLocation().getY() - 5;
                 int l = t.getWidth() + 4;
                 if (bottomBorder) {
-                    y += t.getHeight() + 4;
+                    y += t.getHeight();
                 }
                 if (i == columns || bottomBorder) {
                     line = new GridLine(x, y, l, true, false, true);
@@ -120,11 +120,18 @@ public class SuguruSolver {
             }
             for (JTextField t : getVerticalList(index)) {
                 GridLine line;
-                int x = (int) t.getLocation().getX() - 5;
+                int x = (int) t.getLocation().getX();
+                if (index == 0) {
+                    x -= 1;
+                } else
+                {
+                    x -= 5;
+                }
                 int y = (int) t.getLocation().getY();
-                int h = y + t.getHeight() + 5;
+                int h = t.getHeight();
+                System.out.println(h);
                 if (rightBorder) {
-                    x += t.getWidth() + 5;
+                    x += t.getWidth();
                 }
                 if (i == columns || rightBorder) {
                     line = new GridLine(x, y, h, true, false, false);
