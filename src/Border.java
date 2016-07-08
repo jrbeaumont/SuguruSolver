@@ -57,4 +57,12 @@ public class Border {
         return y;
     }
 
+    public String toString() {
+        return "X: " + x + " Y: " + y + "\n" + 
+               "Left: " + left + "\n" +
+               "Top: " + top + "\n" +
+               "Right: " + right + "\n" +
+               "Bottom: " + bottom + "\n\n"; 
+    }
+
 }
